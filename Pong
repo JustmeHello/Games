@@ -1,0 +1,119 @@
+import pygame
+import random
+
+# Initialize pygame
+pygame.init()
+
+# Define colors
+white = (255, 255, 255)
+black = (0, 0, 0)
+
+# Set up the display
+width = 640
+height = 480
+dis = pygame.display.set_mode((width, height))
+pygame.display.set_caption('Pong Game')
+
+# Set up the clock
+clock = pygame.time.Clock()
+
+# Set up the paddles and the ball
+paddle_width = 15
+paddle_height = 100
+paddle_speed = 5
+ball_size = 10
+ball_speed_x = 4 * random.choice((1, -1))
+ball_speed_y = 4 * random.choice((1, -1))
+
+# Set up the paddles
+paddle1_pos = [50, height // 2 - paddle_height // 2]
+paddle2_pos = [width - 50 - paddle_width, height // 2 - paddle_height // 2]
+
+# Set up the ball
+ball_pos = [width // 2, height // 2]
+
+# Score
+score1 = 0
+score2 = 0
+
+# Game loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Paddle 1 movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] and paddle1_pos[1] > 0:
+        paddle1_pos[1] -= paddle_speed
+    if keys[pygame.K_s] and paddle1_pos[1] < height - paddle_height:
+        paddle1_pos[1] += paddle_speed
+
+    # Paddle 2 movement (AI)
+    # Slight delay for the AI to mimic human reflexes
+    if pygame.time.get_ticks() % 5 == 0:
+        if paddle2_pos[1] + paddle_height // 2 < ball_pos[1] + 10:
+            paddle2_pos[1] += paddle_speed
+        if paddle2_pos[1] + paddle_height // 2 > ball_pos[1] - 10:
+            paddle2_pos[1] -= paddle_speed
+
+    # Ball movement
+    ball_pos[0] += ball_speed_x
+    ball_pos[1] += ball_speed_y
+
+    # Ball collision with top and bottom
+    if ball_pos[1] <= 0 or ball_pos[1] >= height - ball_size:
+        ball_speed_y *= -1
+
+    # Ball collision with paddles
+    if (ball_pos[0] <= paddle1_pos[0] + paddle_width and paddle1_pos[1] <= ball_pos[1] <= paddle1_pos[1] + paddle_height) or \
+       (ball_pos[0] + ball_size >= paddle2_pos[0] and paddle2_pos[1] <= ball_pos[1] <= paddle2_pos[1] + paddle_height):
+        ball_speed_x *= -1
+
+    # Ball out of bounds
+    if ball_pos[0] <= 0:
+        score2 += 1
+        ball_pos = [width // 2, height // 2]
+        ball_speed_x *= random.choice((1, -1))
+        ball_speed_y *= random.choice((1, -1))
+    if ball_pos[0] >= width:
+        score1 += 1
+        ball_pos = [width // 2, height // 2]
+        ball_speed_x *= random.choice((1, -1))
+        ball_speed_y *= random.choice((1, -1))
+
+    # Game over condition
+    game_over = score1 >= 10 or score2 >= 10
+
+    # Draw the game
+    dis.fill(black)
+    pygame.draw.rect(dis, white, (paddle1_pos[0], paddle1_pos[1], paddle_width, paddle_height))
+    pygame.draw.rect(dis, white, (paddle2_pos[0], paddle2_pos[1], paddle_width, paddle_height))
+    pygame.draw.ellipse(dis, white, (ball_pos[0], ball_pos[1], ball_size, ball_size))
+    pygame.draw.aaline(dis, white, (width // 2, 0), (width // 2, height))
+
+    # Display scores
+    font = pygame.font.SysFont(None, 74)
+    text = font.render(str(score1), 1, white)
+    dis.blit(text, (250, 10))
+    text = font.render(str(score2), 1, white)
+    dis.blit(text, (350, 10))
+
+    # Display game over message
+    if game_over:
+        font = pygame.font.SysFont(None, 36)
+        text = font.render('Game Over', 1, white)
+        dis.blit(text, (width // 2 - text.get_width() // 2, height // 2 - text.get_height() // 2))
+
+    pygame.display.update()
+
+    # Game over condition
+    if game_over:
+        pygame.time.wait(2000)  # Wait for 2 seconds before closing the game
+        running = False
+
+    clock.tick(60)
+
+pygame.quit()
+quit()
